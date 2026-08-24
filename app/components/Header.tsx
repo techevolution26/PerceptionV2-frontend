@@ -61,15 +61,16 @@ export default function Header({
 
   return (
     <div className="flex min-h-[3.5rem] items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 md:px-6">
-      {/* Wordmark Layout Container - Preserved fully on mobile for brand awareness */}
+      {/* Wordmark Layout Container */}
       <Link
         href="/"
-        className="group flex shrink-0 items-center gap-1 text-[16px] font-bold tracking-tight text-foreground sm:text-lg md:hidden select-none"
+        className="group flex shrink-0 items-center gap-1 text-[16px] font-bold tracking-tight text-foreground sm:text-lg select-none"
       >
+        {/* FIXED: Added 'md:hidden' so the icon is only visible on mobile layouts and disappears on desktop */}
         <VantageMark
           size={20}
           strokeWidth={1.8}
-          className="text-accent transition-opacity group-hover:opacity-80 sm:size-6"
+          className="text-accent transition-opacity group-hover:opacity-80 sm:size-6 md:hidden"
         />
 
         <div className="flex items-center">
@@ -82,7 +83,7 @@ export default function Header({
         </div>
       </Link>
 
-      {/* Search Input Container - Scaled down for mobile safety */}
+      {/* Search Input Container */}
       <form
         onSubmit={handleSubmit}
         className="relative w-full max-w-[140px] sm:max-w-md transition-all duration-200"
