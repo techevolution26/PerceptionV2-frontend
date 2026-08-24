@@ -1,7 +1,12 @@
 "use client";
 
 import type { ReactNode, MouseEventHandler } from "react";
-import { PlusIcon, BellIcon, HomeIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  BellIcon,
+  HomeIcon,
+  ChatBubbleLeftRightIcon,
+} from "@heroicons/react/24/outline";
 import { useRouter, usePathname } from "next/navigation";
 import useCurrentUser from "../hooks/useCurrentUser";
 import VantageMark from "./ui/VantageMark";
@@ -37,12 +42,35 @@ interface SidebarProps {
   onBellClick?: () => void;
 }
 
-export default function Sidebar({ onNewClick = () => {}, onBellClick = () => {} }: SidebarProps) {
+export default function Sidebar({
+  onNewClick = () => {},
+  onBellClick = () => {},
+}: SidebarProps) {
   const { user, loading } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
 
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const go = (path: string) => router.push(path);
+
+  // FIXED: Action guard ensuring user icon clicks route unauthenticated/401 guests to login portal
+  const handleProfileClick = () => {
+    if (!token || !user) {
+      router.push("/login");
+      return;
+    }
+    router.push(`/users/${user.id}`);
+  };
+
+  // FIXED: Global navigation interceptor to guard secondary buttons for clean guest UX
+  const handleProtectedGo = (path: string) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    go(path);
+  };
 
   return (
     <nav className="flex h-full flex-col items-center">
@@ -56,10 +84,15 @@ export default function Sidebar({ onNewClick = () => {}, onBellClick = () => {} 
       </button>
 
       <div className="flex flex-1 flex-col items-center gap-2">
-        <NavButton active={pathname === "/"} onClick={() => go("/")} title="Home">
+        <NavButton
+          active={pathname === "/"}
+          onClick={() => go("/")}
+          title="Home"
+        >
           <HomeIcon className="h-5 w-5" />
         </NavButton>
 
+        {/* Action button triggers internally route token-checking logic via parent shell hooks */}
         <NavButton onClick={onNewClick} title="New Perception">
           <PlusIcon className="h-5 w-5" />
         </NavButton>
@@ -68,7 +101,12 @@ export default function Sidebar({ onNewClick = () => {}, onBellClick = () => {} 
           <BellIcon className="h-5 w-5" />
         </NavButton>
 
-        <NavButton active={pathname?.startsWith("/messages")} onClick={() => go("/messages")} title="Messages">
+        {/* PROTECTED ROUTE GUARD: Intercepts message tab redirection loops */}
+        <NavButton
+          active={pathname?.startsWith("/messages")}
+          onClick={() => handleProtectedGo("/messages")}
+          title="Messages"
+        >
           <ChatBubbleLeftRightIcon className="h-5 w-5" />
         </NavButton>
       </div>
@@ -76,15 +114,19 @@ export default function Sidebar({ onNewClick = () => {}, onBellClick = () => {} 
       <div className="flex flex-col items-center gap-4 pb-1">
         {/* <ThemeToggle /> */}
         <button
-          onClick={() => user && go(`/users/${user.id}`)}
-          title="My profile"
-          aria-label="My profile"
+          onClick={handleProfileClick}
+          title={token && user ? "My profile" : "Log in"}
+          aria-label={token && user ? "My profile" : "Log in"}
           className="rounded-full ring-offset-2 ring-offset-background transition hover:ring-2 hover:ring-accent/50"
         >
           {loading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-surface-sunken" />
           ) : (
-            <Avatar src={user?.avatar_url} alt={user?.name} size="sm" />
+            <Avatar
+              src={user?.avatar_url}
+              alt={user?.name || "Guest User"}
+              size="sm"
+            />
           )}
         </button>
       </div>

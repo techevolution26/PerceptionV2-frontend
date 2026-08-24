@@ -23,11 +23,7 @@ export const metadata: Metadata = {
     default: "Perception — Your Companion to Greater Knowledge & Wisdom",
     template: "%s · Perception",
   },
-  description:
-    "Perception is where one topic is seen from every angle — share your take, read someone else's, and get closer to the whole picture.",
-  metadataBase: process.env.NEXT_PUBLIC_SITE_URL
-    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
-    : undefined,
+  description: "Perception is where one topic is seen from every angle.",
 };
 
 export const viewport: Viewport = {
@@ -37,7 +33,11 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body

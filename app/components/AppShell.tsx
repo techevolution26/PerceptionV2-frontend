@@ -31,12 +31,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    setToken(typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    setToken(
+      typeof window !== "undefined" ? localStorage.getItem("token") : null,
+    );
   }, [pathname]);
 
-  // Note: the hook takes no arguments (it always reads its own token from
-  // localStorage internally) — kept that way here rather than passing one
-  // that's silently ignored.
   const { topics, loading } = useTopics();
 
   useEffect(() => {
@@ -60,77 +59,100 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <EchoProvider>
-      <div className="flex min-h-screen w-full flex-col">
-        <aside className="fixed left-0 top-0 z-40 hidden h-full w-20 flex-col items-center border-r border-border-hairline bg-background py-5 md:flex">
-          <Sidebar
+        <div className="flex min-h-screen w-full flex-col">
+          <aside className="fixed left-0 top-0 z-40 hidden h-full w-20 flex-col items-center border-r border-border-hairline bg-background py-5 md:flex">
+            <Sidebar
+              onNewClick={() => setShowForm(true)}
+              onBellClick={() => setShowNotifications((v) => !v)}
+            />
+          </aside>
+
+          <div className="flex min-h-screen w-full flex-col pb-16 pl-0 md:pb-0 md:pl-20">
+            <header className="sticky top-0 z-30 border-b border-border-hairline bg-background/85 backdrop-blur">
+              <Header onBellClick={() => setShowNotifications((v) => !v)} />
+            </header>
+            <TopicsCarousel topics={topics} visible={showTopics && !loading} />
+
+            {/* ANIMATED LAYOUT WRAPPER: Ensures children route views slide and fade up smoothly on entry */}
+            <AnimatePresence mode="wait">
+              <motion.main
+                key={pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="flex-grow will-change-transform-opacity"
+              >
+                {children}
+              </motion.main>
+            </AnimatePresence>
+          </div>
+
+          <AnimatePresence>
+            {showForm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-end justify-center bg-overlay md:items-center"
+                onClick={() => setShowForm(false)}
+              >
+                <motion.div
+                  initial={{ y: 24, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 12, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 32 }}
+                  className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-t-card border border-border-hairline bg-surface p-5 shadow-2xl md:rounded-card"
+                  onClick={(e: MouseEvent<HTMLDivElement>) =>
+                    e.stopPropagation()
+                  }
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold tracking-tight">
+                      New Perception
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="!px-2"
+                      onClick={() => setShowForm(false)}
+                      aria-label="Close"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <NewPerceptionForm
+                    topics={topics}
+                    onSuccess={() => setShowForm(false)}
+                    token={token}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {pathname === "/login" && <LoginModal />}
+          {pathname === "/register" && <RegisterModal />}
+
+          <AnimatePresence>
+            {showNotifications && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="fixed right-4 top-16 z-50 w-[calc(100%-2rem)] max-w-sm rounded-card border border-border-hairline bg-surface p-3 shadow-2xl sm:right-6"
+              >
+                <NotificationsPanel />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <MobileNav
             onNewClick={() => setShowForm(true)}
             onBellClick={() => setShowNotifications((v) => !v)}
           />
-        </aside>
-
-        <div className="flex min-h-screen w-full flex-col pb-16 pl-0 md:pb-0 md:pl-20">
-          <header className="sticky top-0 z-30 border-b border-border-hairline bg-background/85 backdrop-blur">
-            <Header onBellClick={() => setShowNotifications((v) => !v)} />
-          </header>
-          <TopicsCarousel topics={topics} visible={showTopics && !loading} />
-          <main className="flex-grow">{children}</main>
         </div>
-
-        <AnimatePresence>
-          {showForm && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-end justify-center bg-overlay md:items-center"
-              onClick={() => setShowForm(false)}
-            >
-              <motion.div
-                initial={{ y: 24, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 12, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 320, damping: 32 }}
-                className="max-h-[90vh] w-full max-w-lg overflow-auto rounded-t-card border border-border-hairline bg-surface p-5 shadow-2xl md:rounded-card"
-                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold tracking-tight">New Perception</h2>
-                  <Button variant="ghost" size="sm" className="!px-2" onClick={() => setShowForm(false)} aria-label="Close">
-                    <XMarkIcon className="h-5 w-5" />
-                  </Button>
-                </div>
-                <NewPerceptionForm
-                  topics={topics}
-                  onSuccess={() => setShowForm(false)}
-                  token={token}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {pathname === "/login" && <LoginModal />}
-        {pathname === "/register" && <RegisterModal />}
-
-        <AnimatePresence>
-          {showNotifications && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-              className="fixed right-4 top-16 z-50 w-[calc(100%-2rem)] max-w-sm rounded-card border border-border-hairline bg-surface p-3 shadow-2xl sm:right-6"
-            >
-              <NotificationsPanel />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <MobileNav
-          onNewClick={() => setShowForm(true)}
-          onBellClick={() => setShowNotifications((v) => !v)}
-        />
-      </div>
       </EchoProvider>
     </QueryClientProvider>
   );

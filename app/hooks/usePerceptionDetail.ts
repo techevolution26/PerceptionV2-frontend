@@ -17,7 +17,9 @@ function normalize(list: Comment[] = []): Comment[] {
   return list.map((c) => ({ ...c, replies: normalize(c.replies || []) }));
 }
 
-export function usePerceptionDetail(id: number | string): UsePerceptionDetailResult {
+export function usePerceptionDetail(
+  id: number | string,
+): UsePerceptionDetailResult {
   const [perception, setPerception] = useState<Perception | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [me, setMe] = useState<UserMe | null>(null);
@@ -29,27 +31,48 @@ export function usePerceptionDetail(id: number | string): UsePerceptionDetailRes
     setError(null);
 
     try {
-      const token = localStorage.getItem("token") || "";
-      const headers = { Authorization: `Bearer ${token}` };
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const headers: HeadersInit = token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
 
-      const [uRes, pRes, cRes] = await Promise.all([
-        fetch("/api/user", { headers }),
+      // 1. Fetch public perception details and comments. This will pass cleanly for anyone.
+      const [pRes, cRes] = await Promise.all([
         fetch(`/api/perceptions/${id}`, { headers }),
         fetch(`/api/perceptions/${id}/comments`, { headers }),
       ]);
 
-      if (!uRes.ok || !pRes.ok || !cRes.ok)
+      if (!pRes.ok || !cRes.ok) {
         throw new Error("Failed to load perception or comments");
+      }
 
-      const [u, p, c]: [UserMe, Perception, Comment[]] = await Promise.all([
-        uRes.json(),
+      const [p, c]: [Perception, Comment[]] = await Promise.all([
         pRes.json(),
         cRes.json(),
       ]);
 
-      setMe(u);
       setPerception(p);
       setComments(normalize(c));
+
+      // 2. ISOLATED PROFILE CHECK: Fetch user metadata only if a valid token is present
+      if (token) {
+        try {
+          const uRes = await fetch("/api/user", { headers });
+          if (uRes.ok) {
+            const u: UserMe = await uRes.json();
+            setMe(u);
+          } else if (uRes.status === 401) {
+            // Token expired or invalid, clear state back to guest mode gently
+            setMe(null);
+          }
+        } catch (userErr) {
+          console.warn("Optional profile load skipped or failed:", userErr);
+          setMe(null);
+        }
+      } else {
+        setMe(null); // Explicitly guest
+      }
     } catch (err) {
       console.error("Load error:", err);
       setError(err instanceof Error ? err.message : "Failed to load");

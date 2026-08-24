@@ -1,13 +1,22 @@
+// app/components/Header.tsx
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { LightBulbIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  LightBulbIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ThemeToggle from "./ui/ThemeToggle";
 import type { UserMe } from "../types/models";
+import VantageMark from "./ui/VantageMark";
 
-export default function Header({ onBellClick = () => {} }: { onBellClick?: () => void }) {
+export default function Header({
+  onBellClick = () => {},
+}: {
+  onBellClick?: () => void;
+}) {
   const [mounted, setMounted] = useState(false);
   const [, setUser] = useState<UserMe | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,24 +60,38 @@ export default function Header({ onBellClick = () => {} }: { onBellClick?: () =>
   }
 
   return (
-    <div className="flex min-h-[3.5rem] items-center justify-between gap-4 px-4 py-2.5 md:px-6">
-      {/* Wordmark — the lightbulb stands in for the "o" in Percepti[o]n */}
+    <div className="flex min-h-[3.5rem] items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 md:px-6">
+      {/* Wordmark Layout Container - Preserved fully on mobile for brand awareness */}
       <Link
         href="/"
-        className="group flex shrink-0 items-center text-lg font-semibold tracking-tight text-foreground md:hidden"
+        className="group flex shrink-0 items-center gap-1 text-[16px] font-bold tracking-tight text-foreground sm:text-lg md:hidden select-none"
       >
-        <span>Percepti</span>
-        <LightBulbIcon className="-mx-0.5 h-4.5 w-4.5 text-accent transition-transform duration-300 group-hover:-rotate-12" />
-        <span>n</span>
+        <VantageMark
+          size={20}
+          strokeWidth={1.8}
+          className="text-accent transition-opacity group-hover:opacity-80 sm:size-6"
+        />
+
+        <div className="flex items-center">
+          <span className="leading-none">Percepti</span>
+          <LightBulbIcon
+            className="-mx-[0.1rem] -mt-[0.12rem] h-[1.05rem] w-[1.05rem] shrink-0 text-accent transition-transform duration-300 ease-out group-hover:-rotate-12 group-hover:scale-105 sm:-mx-[0.125rem] sm:-mt-[0.15rem] sm:h-[1.2rem] sm:w-[1.2rem]"
+            strokeWidth={2.2}
+          />
+          <span className="leading-none">n</span>
+        </div>
       </Link>
 
-      {/* Search */}
-      <form onSubmit={handleSubmit} className="relative w-full max-w-md">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+      {/* Search Input Container - Scaled down for mobile safety */}
+      <form
+        onSubmit={handleSubmit}
+        className="relative w-full max-w-[140px] sm:max-w-md transition-all duration-200"
+      >
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 sm:pl-3">
           {loading ? (
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-foreground-subtle border-t-transparent animate-spin" />
+            <span className="h-3 w-3 rounded-full border-2 border-foreground-subtle border-t-transparent animate-spin sm:h-3.5 sm:w-3.5" />
           ) : (
-            <MagnifyingGlassIcon className="h-4 w-4 text-foreground-subtle" />
+            <MagnifyingGlassIcon className="h-3.5 w-3.5 text-foreground-subtle sm:h-4 sm:w-4" />
           )}
         </div>
         <input
@@ -76,10 +99,12 @@ export default function Header({ onBellClick = () => {} }: { onBellClick?: () =>
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           disabled={loading}
-          placeholder={loading ? "Searching…" : "Search perceptions, topics, people…"}
-          className="block w-full rounded-pill border border-border-hairline bg-surface-sunken py-2 pl-9 pr-3.5 text-sm
+          placeholder={loading ? "..." : "Search..."}
+          className="block w-full rounded-pill border border-border-hairline bg-surface-sunken py-1 pl-7 pr-2.5 text-xs
                      text-foreground placeholder:text-foreground-subtle transition
-                     focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60"
+                     focus:border-transparent focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-60
+                     sm:py-2 sm:pl-9 sm:pr-3.5 sm:text-sm
+                     [@media(min-width:640px)]:placeholder:content-['Search_perceptions,_topics,_people...']"
         />
       </form>
 

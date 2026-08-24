@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ import { useRouter } from "next/navigation";
 import VantageMark from "./components/ui/VantageMark";
 import usePerceptionsStore from "./store/usePerceptionsStore";
 import { useShallow } from "zustand/react/shallow";
+import { motion, type Variants } from "motion/react";
 import type { Perception, Topic, LikeToggle } from "./types/models";
 
 interface TopicGroup extends Topic {
@@ -38,6 +40,24 @@ function SkeletonCard() {
   );
 }
 
+// FIXED: Explicitly typed configuration objects to satisfy the index signature compiler rule
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 260, damping: 26 },
+  },
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -45,7 +65,6 @@ export default function HomePage() {
   const [deleteTarget, setDeleteTarget] = useState<Perception | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // FIXED: useShallow ensures array references created by map/filter stop the infinite loop
   const perceptions = usePerceptionsStore(
     useShallow((s) => s.order.map((id) => s.byId[id]).filter(Boolean)),
   );
@@ -57,26 +76,17 @@ export default function HomePage() {
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     async function load() {
       try {
-        const t: Topic[] = await fetch("/api/topics", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json());
+        const headers: HeadersInit = token
+          ? { Authorization: `Bearer ${token}` }
+          : {};
+        const t: Topic[] = await fetch("/api/topics", { headers }).then((r) =>
+          r.json(),
+        );
         setTopics(t);
 
-        const res2 = await fetch("/api/perceptions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res2.status === 401) {
-          router.push("/login");
-          return;
-        }
-
+        const res2 = await fetch("/api/perceptions", { headers });
         let perData: Perception[] = [];
         if (res2.ok) {
           const text = await res2.text();
@@ -94,9 +104,8 @@ export default function HomePage() {
     }
 
     load();
-  }, [token, router, hydrateFeed]);
+  }, [token, hydrateFeed]);
 
-  // OPTIMIZATION: Memoized computation avoids recalculating nested loops on every single re-render
   const byTopic: TopicGroup[] = useMemo(() => {
     return topics
       .map((topic) => ({
@@ -107,6 +116,10 @@ export default function HomePage() {
   }, [topics, perceptions]);
 
   const handleLike = async (p: Perception) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     const method = p.liked_by_user ? "DELETE" : "POST";
     const res = await fetch(`/api/perceptions/${p.id}/like`, {
       method,
@@ -118,11 +131,32 @@ export default function HomePage() {
     updatePerception(p.id, { liked_by_user: liked, likes_count });
   };
 
-  const handleEdit = (perception: Perception) => setEditTarget(perception);
-  const handleDelete = (perception: Perception) => setDeleteTarget(perception);
+  const handleComment = (p: Perception) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    router.push(`/perceptions/${p.id}`);
+  };
+
+  const handleEdit = (perception: Perception) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setEditTarget(perception);
+  };
+
+  const handleDelete = (perception: Perception) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setDeleteTarget(perception);
+  };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !token) return;
     const res = await fetch(`/api/perceptions/${deleteTarget.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -152,10 +186,18 @@ export default function HomePage() {
     );
   }
 
+  // FIXED: Restored complete document structure and full container layout termination blocks
   return (
-    <main className="mx-auto max-w-7xl space-y-12 p-4 sm:p-6">
+    <main className="mx-auto max-w-7xl space-y-12 p-4 sm:p-6 overflow-hidden">
       {byTopic.map((group) => (
-        <section key={group.id}>
+        <motion.section
+          key={group.id}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-6% 0px" }}
+          variants={containerVariants}
+          className="will-change-transform-opacity"
+        >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               {group.name}
@@ -173,27 +215,33 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {group.items.map((p) => (
-              <PerceptionCard
-                key={p.id}
-                perception={p}
-                onLike={() => handleLike(p)}
-                onEdit={() => handleEdit(p)}
-                onDelete={() => handleDelete(p)}
-                showOwnerActions
-                className="h-full"
-              />
+              <motion.div key={p.id} variants={cardVariants} className="h-full">
+                <PerceptionCard
+                  perception={p}
+                  onLike={() => handleLike(p)}
+                  onComment={() => handleComment(p)}
+                  onEdit={() => handleEdit(p)}
+                  onDelete={() => handleDelete(p)}
+                  showOwnerActions={!!token}
+                  className="h-full"
+                />
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
       ))}
 
       {byTopic.length === 0 && (
-        <div className="space-y-4 py-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-4 py-16 text-center"
+        >
           <VantageMark size={30} className="mx-auto text-foreground-subtle" />
           <p className="text-sm text-foreground-subtle">
             No perceptions available yet. Check back soon!
           </p>
-        </div>
+        </motion.div>
       )}
 
       {editTarget && (
