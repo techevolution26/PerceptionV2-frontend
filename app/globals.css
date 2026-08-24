@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Perspective — Design Tokens
+   Direction: Minimal monochrome, one sharp accent.
+   Neutral ramp is cool-slate (not pure black/white). Accent is a warm amber
+   ("insight" / lightbulb) — the one spot of color in an otherwise quiet UI.
+   Theme switching is handled by next-themes toggling a `.dark` class on <html>.
+   ========================================================================== */
+
+:root {
+  /* fixed neutral ramp — same physical colors in both themes */
+  --ink-50: #f7f7f8;
+  --ink-100: #eceef1;
+  --ink-200: #d8dbe1;
+  --ink-300: #b7bcc6;
+  --ink-400: #8b91a0;
+  --ink-500: #666c7a;
+  --ink-600: #4a4f5c;
+  --ink-700: #343842;
+  --ink-800: #21232b;
+  --ink-900: #14151a;
+  --ink-950: #0a0b0e;
+
+  /* accent — warm amber, used sparingly */
+  --accent-50: #fdf3e2;
+  --accent-200: #f6d49a;
+  --accent-400: #f2a33c;
+  --accent-500: #e8901c;
+  --accent-600: #c97412;
+
+  --danger-500: #e5484d;
+  --success-500: #2fae6a;
+
+  /* semantic — light mode */
+  --background: #fcfcfb;
+  --surface: #ffffff;
+  --surface-hover: var(--ink-50);
+  --surface-sunken: var(--ink-50);
+  --foreground: var(--ink-900);
+  --foreground-muted: var(--ink-500);
+  --foreground-subtle: var(--ink-400);
+  --border-hairline: var(--ink-100);
+  --border-strong: var(--ink-200);
+  --accent: var(--accent-400);
+  --accent-strong: var(--accent-600);
+  --accent-on: #201203;
+  --accent-soft: var(--accent-50);
+  --overlay: rgb(10 11 14 / 45%);
+}
+
+.dark {
+  --background: var(--ink-950);
+  --surface: var(--ink-900);
+  --surface-hover: var(--ink-800);
+  --surface-sunken: #0e0f13;
+  --foreground: var(--ink-50);
+  --foreground-muted: var(--ink-400);
+  --foreground-subtle: var(--ink-600);
+  --border-hairline: var(--ink-800);
+  --border-strong: var(--ink-700);
+  --accent: var(--accent-400);
+  --accent-strong: var(--accent-200);
+  --accent-on: #201203;
+  --accent-soft: rgb(242 163 60 / 14%);
+  --overlay: rgb(0 0 0 / 60%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-border-hairline: var(--border-hairline);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-on: var(--accent-on);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger-500);
+  --color-success: var(--success-500);
+  --color-overlay: var(--overlay);
+
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 0.875rem;
+  --radius-control: 0.625rem;
+  --radius-pill: 999px;
+}
+
+* {
+  border-color: var(--border-hairline);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* scrollbars — quiet, not default chrome grey */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-manipulation {
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-3px); }
+  100% { transform: translateX(0); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes vantage-spin {
+  to { transform: rotate(360deg); }
+}
+.animate-vantage-spin {
+  animation: vantage-spin 1.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
