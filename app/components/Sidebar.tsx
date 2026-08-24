@@ -74,7 +74,7 @@ export default function Sidebar({ onNewClick = () => {}, onBellClick = () => {} 
       </div>
 
       <div className="flex flex-col items-center gap-4 pb-1">
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
         <button
           onClick={() => user && go(`/users/${user.id}`)}
           title="My profile"
