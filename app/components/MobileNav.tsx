@@ -31,28 +31,32 @@ export default function MobileNav({
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(true);
   const [showHandle, setShowHandle] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   const lastY = useRef(0);
+  const scrollDistance = useRef(0); // Tracks progressive trend lines to kill finger tremors
   const ticking = useRef(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
 
-  // Read the auth token locally to provide instantaneous action validation loops
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
+  // FIXED: Listens to route modifications to instantly recalculate authentication visibility states without requiring system reloads
   useEffect(() => {
     setMounted(true);
+    setToken(
+      typeof window !== "undefined" ? localStorage.getItem("token") : null,
+    );
+  }, [pathname]);
+
+  useEffect(() => {
     lastY.current = typeof window !== "undefined" ? window.scrollY || 0 : 0;
 
-    // FIXED: Soften input field adjustments to prevent keyboard sizing reflow conflicts
     const onFocusIn = (ev: FocusEvent) => {
       const target = ev.target as HTMLElement | null;
       const tag = target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) {
         setVisible(false);
-        setShowHandle(false); // Hide both elements so keyboard has full space
+        setShowHandle(false);
       }
     };
 
@@ -67,28 +71,40 @@ export default function MobileNav({
 
       window.requestAnimationFrame(() => {
         const y = window.scrollY || 0;
-
-        // FIXED: Safe boundaries block phone viewport elastic scroll ranges (rubber-banding bouncing)
         const maxScroll =
           typeof document !== "undefined"
             ? document.documentElement.scrollHeight - window.innerHeight
             : 0;
-        if (y <= 0 || y >= maxScroll - 10) {
+
+        // Block bounces from iOS elastic scroll boundaries completely
+        if (y <= 10 || y >= maxScroll - 15) {
+          lastY.current = y;
           ticking.current = false;
           return;
         }
 
         const diff = y - lastY.current;
 
-        // FIXED: Significantly increased minimum delta threshold from 10 to 45 to absorb tiny finger adjustments
-        if (diff > 45) {
+        // Accumulate directional travel lines rather than relying on rapid snapshots
+        if (
+          (diff > 0 && scrollDistance.current < 0) ||
+          (diff < 0 && scrollDistance.current > 0)
+        ) {
+          scrollDistance.current = 0; // Direction flipped, clear the line tracker
+        }
+        scrollDistance.current += diff;
+
+        // FIXED: High-tolerance trending thresholds completely kill scroll micro-flickering mid-page
+        if (scrollDistance.current > 80) {
           if (!forceVisible) {
             setVisible(false);
             setShowHandle(true);
+            scrollDistance.current = 0;
           }
-        } else if (diff < -30) {
+        } else if (scrollDistance.current < -50) {
           setVisible(true);
           setShowHandle(false);
+          scrollDistance.current = 0;
         }
 
         lastY.current = y;
@@ -117,7 +133,6 @@ export default function MobileNav({
 
   if (!mounted) return null;
 
-  // ACTION PROTECTION FILTER UTILITY
   const guardAction = (callback: () => void) => {
     if (!token || (!loading && !user)) {
       router.push("/login");
@@ -227,11 +242,12 @@ export default function MobileNav({
           {loading ? (
             <div className="h-11 w-11 animate-pulse rounded-full border border-border-hairline bg-surface-sunken shadow-md" />
           ) : token && user ? (
+            // FIXED: Isolated ring constraints, aspects, and backgrounds ensure the button wrapper is flush with the inner avatar bounds
             <button
               onClick={() => go(`/users/${user.id}`)}
               title="Profile"
               aria-label="Open profile"
-              className="block overflow-hidden rounded-full border-2 border-background shadow-md focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="block aspect-square overflow-hidden rounded-full bg-transparent p-0 border-0 outline-none focus:ring-2 focus:ring-accent/50 shadow-md"
             >
               <Avatar src={user.avatar_url} alt={user.name} size="md" />
             </button>

@@ -13,13 +13,6 @@ interface UseKeepAwakeOptions {
   maxBackoff?: number;
 }
 
-/**
- * useKeepAwake
- * - pings `url` periodically when the page is visible
- * - pings on window focus & online events
- * - uses exponential backoff on repeated failures
- * - uses navigator.sendBeacon for unload when available
- */
 export default function useKeepAwake({
   url = "/api/ping",
   visibleInterval = 1000 * 60 * 5,
@@ -53,7 +46,7 @@ export default function useKeepAwake({
       } catch {
         backoffRef.current = Math.min(
           backoffRef.current ? backoffRef.current * 2 : 1000 * 10,
-          maxBackoff
+          maxBackoff,
         );
         return false;
       }
@@ -62,7 +55,8 @@ export default function useKeepAwake({
     const scheduleNext = (immediate = false) => {
       clearTimeout(timerRef.current);
       if (abortedRef.current) return;
-      const visible = !document.hidden && document.visibilityState === "visible";
+      const visible =
+        !document.hidden && document.visibilityState === "visible";
       const baseInterval = visible ? visibleInterval : hiddenInterval;
       const backoff = backoffRef.current || 0;
       const delay = immediate ? 0 : Math.max(baseInterval, backoff);
@@ -86,16 +80,8 @@ export default function useKeepAwake({
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
 
-    const onBeforeUnload = () => {
-      if (navigator.sendBeacon) {
-        try {
-          navigator.sendBeacon(url);
-        } catch {
-          /* ignore */
-        }
-      }
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
+    // FIXED: Removed the onBeforeUnload navigator.sendBeacon listener loop
+    // to prevent implicit HTTP POST method generation.
 
     return () => {
       abortedRef.current = true;
@@ -103,7 +89,6 @@ export default function useKeepAwake({
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
-      window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, [url, visibleInterval, hiddenInterval, maxBackoff]);
 }
