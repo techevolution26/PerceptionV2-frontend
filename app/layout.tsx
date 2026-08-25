@@ -20,11 +20,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Perception-Your Companion to Greater Knowledge & Wisdom",
+    default: "Perception.App-Your Companion to Greater Knowledge & Wisdom",
     template: "%s · Perception",
   },
   description:
-    "Your Companion to Greater Knowledge & WisdomPower is when you stop reacting on autopilot. Power is when you decide what events mean, control your choices, and master your inner world.Perception is your daily guide to mental agency. It helps you shift from a state of constant reaction to a life of absolute clarity.Transform obstacles into raw fuel for growth. Turn your daily experiences into lasting wisdom.",
+    "Your Companion to Greater Knowledge & Wisdom. Power is when you stop reacting on autopilot. Power is when you decide what events mean, control your choices, and master your inner world.Perception is your daily guide to mental agency. It helps you shift from a state of constant reaction to a life of absolute clarity.Transform obstacles into raw fuel for growth. Turn your daily experiences into lasting wisdom.",
 };
 
 export const viewport: Viewport = {
