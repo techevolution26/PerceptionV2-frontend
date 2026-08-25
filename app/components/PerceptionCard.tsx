@@ -3,7 +3,11 @@
 import { useState, useRef, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartIcon, ChatBubbleOvalLeftIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  HeartIcon,
+  ChatBubbleOvalLeftIcon,
+  EllipsisHorizontalIcon,
+} from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useClickAway } from "react-use";
 import { format, isThisYear } from "date-fns";
@@ -73,14 +77,18 @@ export default function PerceptionCard({
 
   const handleShare = async () => {
     if (!cardRef.current) return;
-    const menuEl = cardRef.current.querySelector<HTMLElement>(".perception-menu");
-    const hiddenEls = cardRef.current.querySelectorAll<HTMLElement>(".exclude-from-snapshot");
+    const menuEl =
+      cardRef.current.querySelector<HTMLElement>(".perception-menu");
+    const hiddenEls = cardRef.current.querySelectorAll<HTMLElement>(
+      ".exclude-from-snapshot",
+    );
     if (menuEl) menuEl.style.visibility = "hidden";
     hiddenEls.forEach((el) => (el.style.visibility = "hidden"));
 
     try {
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: getComputedStyle(cardRef.current).backgroundColor || "#fff",
+        backgroundColor:
+          getComputedStyle(cardRef.current).backgroundColor || "#fff",
         ignoreElements: (el) => el.classList?.contains("exclude-from-snapshot"),
       });
       canvas.toBlob((blob) => {
@@ -136,7 +144,9 @@ export default function PerceptionCard({
                 {topic?.name && (
                   <div className="truncate text-xs text-foreground-subtle">
                     <span className="mr-1">a view on</span>
-                    <span className="font-medium text-foreground-muted">{topic.name}</span>
+                    <span className="font-medium text-foreground-muted">
+                      {topic.name}
+                    </span>
                   </div>
                 )}
               </div>
@@ -217,11 +227,25 @@ export default function PerceptionCard({
           )}
         </div>
 
-        {/* Body */}
-        <div className="px-3.5 pb-2 pt-2 sm:px-4">
-          <p className="whitespace-pre-wrap break-words text-sm text-foreground sm:text-[15px] sm:leading-relaxed">
-            {body}
-          </p>
+        {/* Body Container */}
+        <div className="relative px-3.5 pb-2 pt-2 sm:px-4">
+          <div className="relative">
+            <p
+              className={`whitespace-pre-wrap break-words text-sm text-foreground sm:text-[15px] sm:leading-relaxed ${
+                detailView ? "" : "line-clamp-10"
+              }`}
+            >
+              {body}
+            </p>
+
+            {/* FIXED: The smooth fading mask layer. Only shows on the feed view if the text runs long. */}
+            {!detailView && body.length > 140 && (
+              <div
+                className="pointer-events-none absolute bottom-0 left-0 h-6 w-full bg-gradient-to-t from-surface via-surface/60 to-transparent"
+                aria-hidden="true"
+              />
+            )}
+          </div>
         </div>
 
         {/* Media */}
@@ -264,7 +288,9 @@ export default function PerceptionCard({
           </button>
 
           <button
-            onClick={() => (detailView ? null : router.push(`/perceptions/${id}`))}
+            onClick={() =>
+              detailView ? null : router.push(`/perceptions/${id}`)
+            }
             disabled={detailView}
             className={`flex items-center gap-1.5 rounded-control px-2.5 py-2 text-foreground-muted transition hover:bg-surface-hover active:scale-95 ${detailView ? "cursor-not-allowed opacity-40" : ""}`}
             aria-label={`View comments for perception ${id}`}
@@ -294,7 +320,7 @@ export default function PerceptionCard({
               decoding="async"
             />
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
